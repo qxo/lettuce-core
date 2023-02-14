@@ -15,6 +15,7 @@
  */
 package io.lettuce.core;
 
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketOption;
 import java.time.Duration;
@@ -46,6 +47,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioChannelOption;
+import io.netty.handler.proxy.Socks5ProxyHandler;
 import io.netty.util.AttributeKey;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -309,6 +311,13 @@ public class ConnectionBuilder {
 
     static class PlainChannelInitializer extends ChannelInitializer<Channel> {
 
+
+        private static final String SOCKS_PROXY_HOST = "socksProxyHost";
+
+        private static final String SOCKS_PROXY_PORT = "socksProxyPort";
+
+        private static final String DEFAULT_SOCKS_PROXY_PORT = "1080";
+
         private final Supplier<List<ChannelHandler>> handlers;
 
         private final ClientResources clientResources;
@@ -324,6 +333,13 @@ public class ConnectionBuilder {
         }
 
         private void doInitialize(Channel channel) {
+
+            final String socksProxyHost = System.getProperty(SOCKS_PROXY_HOST);
+            if (socksProxyHost != null) {
+                final int socksProxyPort = Integer.parseInt(System.getProperty(SOCKS_PROXY_PORT, DEFAULT_SOCKS_PROXY_PORT));
+                final Socks5ProxyHandler socks5ProxyHandler = new Socks5ProxyHandler(new InetSocketAddress(socksProxyHost, socksProxyPort));
+                channel.pipeline().addFirst(socks5ProxyHandler);
+            }
 
             for (ChannelHandler handler : handlers.get()) {
                 channel.pipeline().addLast(handler);
