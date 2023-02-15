@@ -61,6 +61,13 @@ public class ConnectionBuilder {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ConnectionBuilder.class);
 
+
+    private static final String SOCKS_PROXY_HOST = "socksProxyHost";
+
+    private static final String SOCKS_PROXY_PORT = "socksProxyPort";
+
+    private static final String DEFAULT_SOCKS_PROXY_PORT = "1080";
+
     public static final AttributeKey<String> REDIS_URI = AttributeKey.valueOf("RedisURI");
 
     private Mono<SocketAddress> socketAddressSupplier;
@@ -118,6 +125,14 @@ public class ConnectionBuilder {
 
         List<ChannelHandler> handlers = new ArrayList<>();
 
+        if (clientOptions.isAutoReconnect()) {
+            final String socksProxyHost = System.getProperty(SOCKS_PROXY_HOST);
+            if (socksProxyHost != null) {
+                final int socksProxyPort = Integer.parseInt(System.getProperty(SOCKS_PROXY_PORT, DEFAULT_SOCKS_PROXY_PORT));
+                final Socks5ProxyHandler socks5ProxyHandler = new Socks5ProxyHandler(new InetSocketAddress(socksProxyHost, socksProxyPort));
+                handlers.add(socks5ProxyHandler);
+            }
+        }
         connection.setOptions(clientOptions);
 
         handlers.add(new ChannelGroupListener(channelGroup, clientResources.eventBus()));
@@ -311,13 +326,6 @@ public class ConnectionBuilder {
 
     static class PlainChannelInitializer extends ChannelInitializer<Channel> {
 
-
-        private static final String SOCKS_PROXY_HOST = "socksProxyHost";
-
-        private static final String SOCKS_PROXY_PORT = "socksProxyPort";
-
-        private static final String DEFAULT_SOCKS_PROXY_PORT = "1080";
-
         private final Supplier<List<ChannelHandler>> handlers;
 
         private final ClientResources clientResources;
@@ -333,13 +341,6 @@ public class ConnectionBuilder {
         }
 
         private void doInitialize(Channel channel) {
-
-            final String socksProxyHost = System.getProperty(SOCKS_PROXY_HOST);
-            if (socksProxyHost != null) {
-                final int socksProxyPort = Integer.parseInt(System.getProperty(SOCKS_PROXY_PORT, DEFAULT_SOCKS_PROXY_PORT));
-                final Socks5ProxyHandler socks5ProxyHandler = new Socks5ProxyHandler(new InetSocketAddress(socksProxyHost, socksProxyPort));
-                channel.pipeline().addFirst(socks5ProxyHandler);
-            }
 
             for (ChannelHandler handler : handlers.get()) {
                 channel.pipeline().addLast(handler);

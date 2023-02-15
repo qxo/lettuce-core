@@ -37,6 +37,8 @@ public class ClientOptions implements Serializable {
 
     public static final boolean DEFAULT_AUTO_RECONNECT = true;
 
+    public static final boolean DEFAULT_SOCKS5_PROXY = true;
+
     public static final int DEFAULT_BUFFER_USAGE_RATIO = 3;
 
     public static final boolean DEFAULT_CANCEL_CMD_RECONNECT_FAIL = false;
@@ -87,6 +89,8 @@ public class ClientOptions implements Serializable {
 
     private final TimeoutOptions timeoutOptions;
 
+    private final boolean supportSocks5Proxy;
+
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
         this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
@@ -101,6 +105,7 @@ public class ClientOptions implements Serializable {
         this.sslOptions = builder.sslOptions;
         this.suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
         this.timeoutOptions = builder.timeoutOptions;
+        this.supportSocks5Proxy = builder.supportSocks5Proxy;
     }
 
     protected ClientOptions(ClientOptions original) {
@@ -117,6 +122,7 @@ public class ClientOptions implements Serializable {
         this.sslOptions = original.getSslOptions();
         this.suspendReconnectOnProtocolFailure = original.isSuspendReconnectOnProtocolFailure();
         this.timeoutOptions = original.getTimeoutOptions();
+        this.supportSocks5Proxy = original.isSupportSocks5Proxy();
     }
 
     /**
@@ -178,6 +184,8 @@ public class ClientOptions implements Serializable {
 
         private TimeoutOptions timeoutOptions = DEFAULT_TIMEOUT_OPTIONS;
 
+        private boolean supportSocks5Proxy = DEFAULT_SOCKS5_PROXY;
+
         protected Builder() {
         }
 
@@ -190,6 +198,19 @@ public class ClientOptions implements Serializable {
          */
         public Builder autoReconnect(boolean autoReconnect) {
             this.autoReconnect = autoReconnect;
+            return this;
+        }
+
+
+        /**
+         * Enables or disables sock5 proxy on tcp connection. Defaults to {@code true}. See
+         * {@link #DEFAULT_AUTO_RECONNECT}.
+         *
+         * @param autoReconnect true/false
+         * @return {@code this}
+         */
+        public Builder supportSocks5Proxy(boolean supportSocks5Proxy) {
+            this.supportSocks5Proxy = supportSocks5Proxy;
             return this;
         }
 
@@ -596,6 +617,15 @@ public class ClientOptions implements Serializable {
      */
     public TimeoutOptions getTimeoutOptions() {
         return timeoutOptions;
+    }
+
+    /**
+     * Controls sock5 proxy feature. If supportJavaSocks5Proxy is {@code true} (default), it is enabled.
+     *
+     * @return {@code true} if java5+ socks5 proxy is enabled.
+     */
+    public boolean isSupportSocks5Proxy() {
+        return supportSocks5Proxy;
     }
 
     /**
